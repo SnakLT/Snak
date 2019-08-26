@@ -1,0 +1,27 @@
+def frequency_sort(items):
+    dic = {}
+    List = []
+        
+    for i in items:
+        if i not in dic:
+            dic[i] = 1
+        else:
+            dic[i] += 1
+    
+    while len(dic) != 0:
+        Key = [max(dic, key = dic.get)]
+        Key_max = Key * max(dic.values())
+        for i in Key_max:
+            List.append(i)
+        del dic[i]
+        
+    return List
+
+
+
+
+print(frequency_sort([4, 6, 2, 2, 6, 4, 4, 4]))
+print(frequency_sort(['bob', 'bob', 'carl', 'alex', 'bob']))
+print(frequency_sort([17, 99, 42]))
+print(frequency_sort([]))
+print(frequency_sort([1]))
