@@ -1,6 +1,5 @@
 def checkio(text) -> str:
     text = text.lower()
-    text = text.replace(' ','')
     string = ''
     List = []
     d = {}
