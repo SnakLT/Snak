@@ -1,0 +1,42 @@
+def checkio(text) -> str:
+    text = text.lower()
+    text = text.replace(' ','')
+    string = ''
+    List = []
+    d = {}
+    for i in text:
+        if i.isalpha():
+            string += i
+
+    for i in string:
+        if i not in d:
+            d[i] = 1
+        else:
+            d[i] += 1
+            
+    if len(text) == len(d):
+        return sorted(d)[0]
+    
+    Num = max(d.values())
+    Chr = max(d, key = d.get)
+    List.append(Chr)
+    del d[Chr]
+    
+    while Num in d.values():
+        List.append(max(d, key = d.get))
+        del d[max(d, key = d.get)]
+        
+    result = sorted(List)
+    return result[0]
+        
+    
+print(checkio("Hello World!"))
+print(checkio("How do you do?"))
+print(checkio("One"))
+print(checkio("Oops!"))
+print(checkio("AAaooo!!!!"))
+print(checkio("abe"))
+print("Start the long test")
+print(checkio("a" * 9000 + "b" * 1000))
+print(checkio("Lorem ipsum dolor sit amet"))
+print(checkio("Lorem ipsum dolor sit amet 0000000000000000000"))
