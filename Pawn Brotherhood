@@ -1,15 +1,11 @@
 def safe_pawns(pawns):
     
-    cha = []
-    num = []
     safe = 0
-    
-    for i in pawns:
-        num.append(int(i[1])), cha.append(i[0])
-        
-    for i in range(len(num)):
-        row = num[i] - 1
-        column_left, column_right = ord(cha[i]) - 1, ord(cha[i]) + 1
+    pawns = list(pawns)
+           
+    for i in range(len(pawns)):
+        row = int(pawns[i][1]) - 1
+        column_left, column_right = ord(pawns[i][0]) - 1, ord(pawns[i][0]) + 1
         check_left = chr(column_left) + str(row)
         check_right = chr(column_right) + str(row)
         
