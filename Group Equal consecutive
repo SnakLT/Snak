@@ -1,0 +1,37 @@
+def group_equal(els):
+    
+    List, Flist, Round = [], [], 0
+ 
+    if len(els) == 1:
+        Flist.append([els[0]])
+        return Flist
+    if len(els) == 0:
+        return []
+    
+    while Round < len(els) - 1:
+        if els[Round] == els[Round + 1]:
+            List.append(els[Round])
+            Round += 1
+            
+        if Round + 1 == len(els):
+            Flist.append(List)
+            break  
+            
+        if els[Round] != els[Round + 1]:
+            List.append(els[Round])
+            Flist.append(List)
+            List = []
+            Round += 1
+            
+    if els[-1] in Flist[-1]:
+        List.append(els[-1])
+    else: Flist.append([els[-1]])
+        
+    return Flist
+            
+
+print(group_equal([1, 1, 4, 4, 4, "hello", "hello", 4]))
+print(group_equal([1, 2, 3, 4]))
+print(group_equal([1]))
+print(group_equal([]))
+print(group_equal([5,5,"5",5,5]))
