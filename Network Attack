@@ -1,0 +1,96 @@
+def capture(matrix):
+    List = []
+    zero = []
+    infected = []
+    Round = 0
+    matrix[0][0] = 1
+    
+    # Get List
+    for i in range(len(matrix)):
+        List.append(matrix[i][i])
+        
+    #Get connections
+    for i in range(len(matrix)):
+        if matrix[i][0] == 1:
+            infected.append(-100)
+        else:
+            infected.append(-500)
+        
+    while True:
+        
+        while True:     
+            for i in range(len(infected)):
+                if infected[i] == -100:
+                    infected[i] = List[i]
+            for i in range(len(infected)):
+                infected[i] = infected[i] - 1
+                
+            Round += 1
+            
+            if 0 in infected:
+                break
+                
+        if min(matrix[0]) == 1 and max(infected) == 0:
+            break
+
+        for j in range(len(infected)):
+            if infected[j] == 0:
+                zero.append(j)
+
+        for k in zero:        
+            for i in range(len(matrix[k])):
+                if matrix[k][i] == 1 and matrix[0][i] == 0:
+                    infected[i] = List[i]
+                    matrix[0][i] = matrix[k][i]
+            zero = []
+            
+    return Round
+
+    
+    
+    
+    
+print(capture(     [[0, 1, 0, 1, 0, 1],
+                    [1, 8, 1, 0, 0, 0],
+                    [0, 1, 2, 0, 0, 1],
+                    [1, 0, 0, 1, 1, 0],
+                    [0, 0, 0, 1, 3, 1],
+                    [1, 0, 1, 0, 1, 2]])) #== 8
+
+print(capture(     [[0, 1, 0, 1, 0, 1],
+                    [1, 1, 1, 0, 0, 0],
+                    [0, 1, 2, 0, 0, 1],
+                    [1, 0, 0, 1, 1, 0],
+                    [0, 0, 0, 1, 3, 1],
+                    [1, 0, 1, 0, 1, 2]])) #== 4 
+
+print(capture(     [[0, 1, 1],
+                    [1, 9, 1],
+                    [1, 1, 9]])) #== 9 
+
+print(capture(     [[0, 1, 1],
+                    [1, 1, 1],
+                    [1, 1, 1]])) #== 1 
+
+print(capture(     [[0, 1, 0],
+                    [1, 9, 1],
+                    [0, 1, 9]])) #== 18 
+
+print(capture(     [[0, 0, 1, 1, 0, 0, 0, 0, 0],
+                    [0, 6, 0, 1, 0, 0, 0, 0, 1],
+                    [1, 0, 9, 1, 0, 1, 0, 0, 0],
+                    [1, 1, 1, 7, 1, 0, 0, 1, 0],
+                    [0, 0, 0, 1, 2, 1, 1, 1, 0],
+                    [0, 0, 1, 0, 1, 8, 1, 1, 0],
+                    [0, 0, 0, 0, 1, 1, 9, 0, 1],
+                    [0, 0, 0, 1, 1, 1, 0, 7, 0],
+                    [0, 1, 0, 0, 0, 0, 1, 0, 9]])) # == 22
+      
+print(capture(     [[0, 0, 1, 0, 0, 0, 0, 1],
+                    [0, 5, 1, 0, 1, 1, 0, 0],
+                    [1, 1, 8, 0, 1, 0, 1, 1],
+                    [0, 0, 0, 6, 1, 0, 1, 1],
+                    [0, 1, 1, 1, 2, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 5, 1, 0],
+                    [0, 0, 1, 1, 0, 1, 5, 0],
+                    [1, 0, 1, 1, 0, 0, 0, 4]])) # == 18
