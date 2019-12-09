@@ -1,0 +1,558 @@
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import filedialog
+import datetime
+import csv
+    
+HEIGHT = 500
+WIDHT = 500
+
+PC_LOCATION = r'C:\Users\konygal\Desktop\Files out\Qualco Files'
+DEBTS_FILE_HEADER_LOCATION = r'C:\Users\konygal\Desktop\Files out\DEBT_FILE Header.txt'
+
+
+def get_file_loc():
+    file_loc.delete(first=0,last=200)
+    filename = filedialog.askopenfilename()
+    file_loc.insert(0,filename)
+    
+def submit_result_template():
+    
+    dic_countrys = {0:"CH", 1:"FR", 2:"FI", 3:"HU", 4:"SE", 5:"NO", 6:"DE", 7:"ES"}
+    try:
+        COUNTRY = dic_countrys[country.curselection()[0]]
+        vendor_nrr = str(vendor_nr.get())
+        CUST_S_ID = CustID.get()
+        File_end_code = file_end_code.get()
+        File_loc = file_loc.get()
+        instance = option.get()
+        check_values = [COUNTRY, vendor_nrr, CUST_S_ID, File_end_code, File_loc, instance]
+        if check_values[4][:2] != 'C:' and check_values[4][-4:] == '.csv':
+            raise IndexError
+        if len(check_values[3]) != 3:
+            raise ValueError
+        for value in check_values:
+            if value == '':
+                raise Exception
+
+        today = datetime.datetime.now().strftime("%Y-%m-%d")
+        Country_List = {'CH':'7001', 'FR':'7002', 'DE':'7004', 'ES':'7006', 'FI':'7003', 'HU':'7005', 'NO':'7008', 'SE':'7007'}
+        code = '0000000000'
+        if instance == 'pc':
+            pc_folder = PC_LOCATION
+            upload_loc_dic = {'FR': pc_folder, 'CH': pc_folder, 'FI': pc_folder,
+                             'SE': pc_folder, 'NO': pc_folder, 'HU': pc_folder,
+                             'ES': pc_folder, 'DE': pc_folder}
+        elif instance == 'test':
+            upload_loc_dic = {'FR':r'\\FIHEL2STDB025\glm\import', 'CH': r'\\FIHEL2STDB026\glm\import', 'FI': r'\\FIHEL2STDB027\glm\import',
+                             'SE': r'\\FIHEL2STDB028\glm\import', 'NO': r'\\FIHEL2STDB030\glm\import', 'HU': r'\\FIHEL2STDB029\glm\import',
+                             'ES': r'\\FIHEL2STDB031\glm\import', 'DE': r'\\FIHEL2STDB031\glm\import'} 
+        else:
+            upload_loc_dic = {'FR':r'\\DEFRA1SUDB015\glm\import', 'CH': r'\\DEFRA1SUDB016\glm\import', 'FI': r'\\DEFRA1SUDB017\glm\import',
+                             'SE': r'\\DEFRA1SUDB018\glm\import', 'NO': r'\\DEFRA1SUDB019\glm\import', 'HU': r'\\DEFRA1SUDB020\glm\import',
+                             'ES': r'\\DEFRA1SUDB021\glm\import', 'DE': r'\\DEFRA1SUDB022\glm\import'}  
+
+        code = code[:-len(vendor_nrr)] + vendor_nrr
+        VENDOR_INTCODE = Country_List[COUNTRY] + code
+        Address_Unique_Identifier = '1510' 
+
+        #print(COUNTRY, VENDOR_INTCODE, CUST_S_ID, File_end_code, File_loc, instance)
+        inputLIST = []
+
+
+    #Creating List of Values from Client Template
+
+        file_list = []
+        with open(File_loc, 'r', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile, delimiter=",", quotechar='"')
+            for row in reader:
+                file_list.append(row)
+        del file_list[0:2]
+
+        inputLIST = file_list
+        csvfile.close()
+
+
+    #Generating DEBT_ITEMS_FILE form given List
+
+        header = 'VENDOR_INTCODE|DEBT_SORG_ID|Informant Code|INVC_S_ID|LINKED_INVC_S_ID|Is Credit Note Indication|Debt Item Issue Date|Debt Item Due Date|Debt Item Last Payment Date|Debt Item Last payment amount |Debt Item label|Debt Item comments|Debt Item number|Debt Item VAT|Debt Item Bank Account BIC|Debt Item IBAN|Debt Item Bank Account|Debt Item Bank Sort Code|Debt Item Bank Holder Name|Debt Item Net Amount|Debt Item Vat Amount|Debt Item Initial Net Amount|Debt Item Initial Vat Amount|Debt Item Reduction Rule|Debt Item Commission policy|Debt Item Retrospective Interest Calculation flag|Debt Item Retrospective Interest Calculation From Date|Debt Item Interest Type|Debt Item Interest Rate|Debt Item Spread Coefficient|Debt Item Interest Coefficient Type|Debt Item Balance|Debt Item Principal Amount|Debt Item Interest Amount|Debt Item Generic 1 Amount|Debt Item Generic 2 Amount|Debt Item Generic 3 Amount|Debt Item Generic 4 Amount|Debt Item Generic 5 Amount|Debt Item Generic 6 Amount|Debt Item Generic 7 Amount|Debt Item Generic 8 Amount|Hold_Charge_on_Generic_1|Hold_Charge_on_Generic_2|Hold_Charge_on_Generic_3|Hold_Charge_on_Generic_4|Hold_Charge_on_Generic_5|Hold_Charge_on_Generic_6|Hold_Charge_on_Generic_7|Hold_Charge_on_Generic_8|Debt Item Generic Date 1|Debt Item Generic Date 2|Debt Item Generic Date 3|Debt Item Generic Date 4|Debt Item Generic Date 5|Debt Item Generic Decimal 1|Debt Item Generic Decimal 2|Debt Item Generic Decimal 3|Debt Item Generic Decimal 4|Debt Item Generic Text 1|Debt Item Generic Text 2|Debt Item Generic Text 3|Debt Item Generic Text 4|Debt Item Generic Bit 1|Debt Item Generic Bit 2|Debt Item Generic Integer 1|Debt Item Generic Integer 2'
+        slpit_header = header.split('|')
+        final_list = []
+        row_length = len(slpit_header)
+
+        for row in inputLIST:
+            final_list.append([''] * row_length)
+
+        for row_final in range(len(inputLIST)):
+                final_list[row_final][0] = VENDOR_INTCODE
+                final_list[row_final][1] = inputLIST[row_final][0]  #DEBT_SORG_ID
+                final_list[row_final][2] = 'IC003'
+                final_list[row_final][3] = inputLIST[row_final][28] #INVC_S_ID
+                final_list[row_final][6] = inputLIST[row_final][29][-4:] + '-' + inputLIST[row_final][29][3:5] + '-' + inputLIST[row_final][29][:2]
+                final_list[row_final][7] = inputLIST[row_final][30][-4:] + '-' + inputLIST[row_final][30][3:5] + '-' + inputLIST[row_final][30][:2]
+                final_list[row_final][21] = inputLIST[row_final][32]
+                #final_list[row_final][23] = 'GTC'
+                final_list[row_final][24] = 'Default Portfolio'
+                final_list[row_final][25] = '1'
+                final_list[row_final][26] = inputLIST[row_final][30][-4:] + '-' + inputLIST[row_final][30][3:5] + '-' + inputLIST[row_final][30][:2]
+                final_list[row_final][27] = 'Default'
+                #final_list[row_final][28] = 'Client'
+                final_list[row_final][32] = inputLIST[row_final][33]
+                final_list[row_final][41] = inputLIST[row_final][35]
+                final_list[row_final][59] = inputLIST[row_final][1]
+
+
+        '''
+                final_list[row_final][32] = '100'
+                final_list[row_final][33] = '100'
+                final_list[row_final][34] = '100'
+                final_list[row_final][35] = '100'
+                final_list[row_final][36] = '100'
+                final_list[row_final][37] = '100'
+                final_list[row_final][38] = '100'
+                final_list[row_final][39] = '100'
+                final_list[row_final][40] = '100'
+                final_list[row_final][41] = '100'
+        '''
+        final_list.insert(0, slpit_header)
+
+
+    #Writing DEBT_ITEMS_FILE
+
+        for row in range(len(final_list)):
+            final_list[row] = ['|'.join(final_list[row])]
+
+        with open(upload_loc_dic[COUNTRY] + '\IMP_PortfolioTelcoNoQC_DEBT_ITEMS_' + today + '_' + File_end_code + '.txt', 'w',encoding='utf16') as csvFile:
+            writer = csv.writer(csvFile, lineterminator = '\n')   
+            writer.writerows(final_list)
+
+        csvFile.close()
+
+
+    #Generating DEBTS_FILE form given List
+
+        final_list = []
+        clean_list = []
+
+        header = open(DEBTS_FILE_HEADER_LOCATION, 'r')
+        content = header.read().split('|')
+        clean_list.append(content)
+
+        if len(inputLIST) == 1:
+            clean_list.append(inputLIST[0])
+        else:
+            clean_list.append(inputLIST[0])
+            for row in range(1,len(inputLIST)): 
+                if inputLIST[row-1][0] != inputLIST[row][0]:
+                    clean_list.append(inputLIST[row])
+
+        final_list.append(content)
+
+        for row in range(1,len(clean_list)):
+            final_list.append([''] * 288)
+
+        for row_final in range(1,len(final_list)):
+            final_list[row_final][0] = VENDOR_INTCODE
+            final_list[row_final][2] = 'B2B' if clean_list[row_final][2] == '1' else "B2C"
+            final_list[row_final][3] = '0-90'
+            #final_list[row_final][5] = '0-730'
+            final_list[row_final][4] = 'DOMESTIC' if clean_list[row_final][17] == COUNTRY else 'INTERNATIONAL'
+            #if datetime.date.today() - datetime.date(int(inputLIST[row_final][37][-4:]), int(inputLIST[row_final][37][3:5]), int(inputLIST[row_final][37][:2])
+            final_list[row_final][9] = clean_list[row_final][0] #DEBT_SORG_ID
+            final_list[row_final][17] = 'IC003'
+            final_list[row_final][19] = 'FOR CONTACT'
+            final_list[row_final][21] = 'Debt Collection'
+            #final_list[row_final][21] = 'Reminder Service'
+            final_list[row_final][23] = 'N/A'
+            final_list[row_final][25] = 'N/A'
+            final_list[row_final][27] = 'N/A'
+            final_list[row_final][50] = '1'
+            final_list[row_final][56] = 'N/A'
+            #final_list[row_final][61] = 'Amicable New'
+            final_list[row_final][94] = str(int(CUST_S_ID) + row_final)
+            final_list[row_final][95] = 'Business' if clean_list[row_final][2] == '1' else 'Individual'
+            final_list[row_final][96] = clean_list[row_final][3]
+            #final_list[row_final][97] = "Sir"
+            final_list[row_final][99] = 'N/A' if clean_list[row_final][7] == '' else clean_list[row_final][7]
+            final_list[row_final][100] = clean_list[row_final][9]
+            final_list[row_final][101] = clean_list[row_final][8]
+            final_list[row_final][102] = clean_list[row_final][6]
+            final_list[row_final][107] = clean_list[row_final][4]
+            final_list[row_final][109] = clean_list[row_final][4]
+            final_list[row_final][111] = clean_list[row_final][10]
+            final_list[row_final][113] = '' if clean_list[row_final][11] == '' else clean_list[row_final][11][-4:] + '-' + clean_list[row_final][11][3:5] + '-' + clean_list[row_final][11][:2]
+            final_list[row_final][133] = COUNTRY
+            final_list[row_final][140] = clean_list[row_final][6]
+            final_list[row_final][184] = str(int(Address_Unique_Identifier) + row_final)
+            final_list[row_final][185] = 'COM' if clean_list[row_final][2] == '1' else 'HOME'
+            final_list[row_final][186] = 'COM' if clean_list[row_final][2] == '1' else 'HOME'
+            final_list[row_final][189] = '1'
+            final_list[row_final][192] = clean_list[row_final][12]
+            final_list[row_final][193] = clean_list[row_final][13]
+            final_list[row_final][197] = clean_list[row_final][12][-1]
+            final_list[row_final][198] = clean_list[row_final][15]
+            final_list[row_final][199] = clean_list[row_final][16]
+            final_list[row_final][200] = clean_list[row_final][14]
+            final_list[row_final][222] = clean_list[row_final][18]
+            final_list[row_final][223] = clean_list[row_final][19]
+            final_list[row_final][228] = clean_list[row_final][21]
+            final_list[row_final][229] = clean_list[row_final][22]
+            final_list[row_final][230] = clean_list[row_final][20]
+            final_list[row_final][231] = clean_list[row_final][23]
+            final_list[row_final][201] = clean_list[row_final][17]
+            final_list[row_final][247] = clean_list[row_final][25]
+            final_list[row_final][261] = clean_list[row_final][26]
+            final_list[row_final][287] = clean_list[row_final][27]
+
+        for row in range(1,len(final_list)):
+            final_list[row].extend([''] * 556)
+
+        header.close()
+
+
+    #Writing DEBTS_FILE
+
+        for row in range(len(final_list)):
+            final_list[row] = ['|'.join(final_list[row])]
+
+        for row in range(len(final_list)):
+            comma = final_list[row][0].replace(',','')
+            final_list[row][0] = comma
+
+        with open(upload_loc_dic[COUNTRY] + '\IMP_PortfolioTelcoNoQC_DEBTS_' + today + '_' + File_end_code + '.txt', 'w', encoding='utf16') as csvFile:
+            writer = csv.writer(csvFile, lineterminator = '\n') 
+            writer.writerows(final_list)
+
+        csvFile.close()
+
+
+    #Writing Rest of the Files
+
+        empty_list = [[]]
+        with open(upload_loc_dic[COUNTRY] + '\IMP_PortfolioTelcoNoQC_DEBT_LABELS_' + today + '_' + File_end_code + '.txt', 'a', encoding='utf16') as labelsFile:
+            labelsFile.write('')
+
+        with open(upload_loc_dic[COUNTRY] + '\IMP_PortfolioTelcoNoQC_DEBTS_EXT_' + today + '_' + File_end_code + '.txt', 'a', encoding='utf16') as extFile:
+            extFile.write('')
+
+        with open(upload_loc_dic[COUNTRY] + '\IMP_PortfolioTelcoNoQC_DEBTS_SCORING_' + today + '_' + File_end_code + '.txt', 'a', encoding='utf16') as scoringFile:
+            scoringFile.write('')
+
+        labelsFile.close()
+        extFile.close()
+        scoringFile.close()
+    
+        messagebox.showinfo(message='Your file is uploaded to ' + instance.upper() + ' ' + COUNTRY)
+        
+    except ValueError:
+        messagebox.showinfo(message='File end code must be 3 didgits long!')
+    except IndexError:
+        messagebox.showinfo(message='Please select file location or wrong file format!')        
+    except:
+        messagebox.showinfo(message='Not all fields are Filled!')
+        
+def submit_result_mockaroo():
+    
+    dic_countrys = {0:"CH", 1:"FR", 2:"FI", 3:"HU", 4:"SE", 5:"NO", 6:"DE", 7:"ES"}
+    try:
+        COUNTRY = dic_countrys[country.curselection()[0]]
+        vendor_nrr = str(vendor_nr.get())
+        CUST_S_ID = CustID.get()
+        File_end_code = file_end_code.get()
+        File_loc = file_loc.get()
+        instance = option.get()
+        check_values = [COUNTRY, vendor_nrr, CUST_S_ID, File_end_code, File_loc, instance]
+        for value in check_values:
+            if value == '':
+                raise Exception
+        if len(check_values[3]) != 3:
+            raise ValueError
+        if check_values[4][:2] != 'C:' and check_values[4][-4:] == '.txt':
+            raise IndexError
+
+        today = datetime.datetime.now().strftime("%Y-%m-%d")
+        Country_List = {'CH':'7001', 'FR':'7002', 'DE':'7004', 'ES':'7006', 'FI':'7003', 'HU':'7005', 'NO':'7008', 'SE':'7007'}
+        code = '0000000000'
+        if instance == 'pc':
+            pc_folder = PC_LOCATION
+            upload_loc_dic = {'FR': pc_folder, 'CH': pc_folder, 'FI': pc_folder,
+                             'SE': pc_folder, 'NO': pc_folder, 'HU': pc_folder,
+                             'ES': pc_folder, 'DE': pc_folder}
+        elif instance == 'test':
+            upload_loc_dic = {'FR':r'\\FIHEL2STDB025\glm\import', 'CH': r'\\FIHEL2STDB026\glm\import', 'FI': r'\\FIHEL2STDB027\glm\import',
+                             'SE': r'\\FIHEL2STDB028\glm\import', 'NO': r'\\FIHEL2STDB030\glm\import', 'HU': r'\\FIHEL2STDB029\glm\import',
+                             'ES': r'\\FIHEL2STDB031\glm\import', 'DE': r'\\FIHEL2STDB031\glm\import'} 
+        else:
+            upload_loc_dic = {'FR':r'\\DEFRA1SUDB015\glm\import', 'CH': r'\\DEFRA1SUDB016\glm\import', 'FI': r'\\DEFRA1SUDB017\glm\import',
+                             'SE': r'\\DEFRA1SUDB018\glm\import', 'NO': r'\\DEFRA1SUDB019\glm\import', 'HU': r'\\DEFRA1SUDB020\glm\import',
+                             'ES': r'\\DEFRA1SUDB021\glm\import', 'DE': r'\\DEFRA1SUDB022\glm\import'}  
+
+        code = code[:-len(vendor_nrr)] + vendor_nrr
+        VENDOR_INTCODE = Country_List[COUNTRY] + code
+        Address_Unique_Identifier = '1510' 
+
+        #print(COUNTRY, VENDOR_INTCODE, CUST_S_ID, File_end_code, File_loc, instance)
+        inputLIST = []
+        first_col = 0
+        debt_items_col = 0
+        invoice_col = 0
+
+        #Creating List of Values from Mockaroo generated file
+        file_list = []
+        with open(File_loc, 'r', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile, delimiter="|", quotechar='"')
+            for row in reader:
+                file_list.append(row)
+
+        for inv in range(len(file_list[0])):
+
+            if file_list[0][inv] == 'Client Reference Number':
+                    first_col = inv
+            if file_list[0][inv] == '_debt_items':
+                debt_items_col = inv
+            if file_list[0][inv] == 'Invoice Number':
+                invoice_col = inv
+
+        for inv in range(len(file_list)):
+            if inv > 0:
+                invNumber = file_list[inv][invoice_col]
+                debt_items = int(file_list[inv][debt_items_col])
+                for i in range(debt_items):
+
+                    item = file_list[inv][:]
+                    inputLIST.append(item)
+                    if debt_items > 1:
+                        inputLIST[len(inputLIST)-1][invoice_col] = '' + invNumber + '-' + str(i+1)
+
+
+        #Generating DEBT_ITEMS_FILE form given List                 
+
+        header = 'VENDOR_INTCODE|DEBT_SORG_ID|Informant Code|INVC_S_ID|LINKED_INVC_S_ID|Is Credit Note Indication|Debt Item Issue Date|Debt Item Due Date|Debt Item Last Payment Date|Debt Item Last payment amount |Debt Item label|Debt Item comments|Debt Item number|Debt Item VAT|Debt Item Bank Account BIC|Debt Item IBAN|Debt Item Bank Account|Debt Item Bank Sort Code|Debt Item Bank Holder Name|Debt Item Net Amount|Debt Item Vat Amount|Debt Item Initial Net Amount|Debt Item Initial Vat Amount|Debt Item Reduction Rule|Debt Item Commission policy|Debt Item Retrospective Interest Calculation flag|Debt Item Retrospective Interest Calculation From Date|Debt Item Interest Type|Debt Item Interest Rate|Debt Item Spread Coefficient|Debt Item Interest Coefficient Type|Debt Item Balance|Debt Item Principal Amount|Debt Item Interest Amount|Debt Item Generic 1 Amount|Debt Item Generic 2 Amount|Debt Item Generic 3 Amount|Debt Item Generic 4 Amount|Debt Item Generic 5 Amount|Debt Item Generic 6 Amount|Debt Item Generic 7 Amount|Debt Item Generic 8 Amount|Hold_Charge_on_Generic_1|Hold_Charge_on_Generic_2|Hold_Charge_on_Generic_3|Hold_Charge_on_Generic_4|Hold_Charge_on_Generic_5|Hold_Charge_on_Generic_6|Hold_Charge_on_Generic_7|Hold_Charge_on_Generic_8|Debt Item Generic Date 1|Debt Item Generic Date 2|Debt Item Generic Date 3|Debt Item Generic Date 4|Debt Item Generic Date 5|Debt Item Generic Decimal 1|Debt Item Generic Decimal 2|Debt Item Generic Decimal 3|Debt Item Generic Decimal 4|Debt Item Generic Text 1|Debt Item Generic Text 2|Debt Item Generic Text 3|Debt Item Generic Text 4|Debt Item Generic Bit 1|Debt Item Generic Bit 2|Debt Item Generic Integer 1|Debt Item Generic Integer 2'
+        slpit_header = header.split('|')
+        final_list = []
+        row_length = len(slpit_header)
+
+        for row in inputLIST:
+            final_list.append([''] * row_length)
+
+        for row_final in range(len(inputLIST)):
+                final_list[row_final][0] = VENDOR_INTCODE
+                final_list[row_final][1] = inputLIST[row_final][first_col]  #DEBT_SORG_ID
+                final_list[row_final][2] = 'IC003'
+                final_list[row_final][3] = inputLIST[row_final][first_col+28] #INVC_S_ID
+                final_list[row_final][6] = inputLIST[row_final][first_col+29][-4:] + '-' + inputLIST[row_final][first_col+29][3:5] + '-' + inputLIST[row_final][first_col+29][:2]
+                final_list[row_final][7] = inputLIST[row_final][first_col+30][-4:] + '-' + inputLIST[row_final][first_col+30][3:5] + '-' + inputLIST[row_final][first_col+30][:2]
+                final_list[row_final][21] = inputLIST[row_final][first_col+32]
+                final_list[row_final][24] = 'Default Portfolio'
+                final_list[row_final][25] = '1'
+                final_list[row_final][26] = inputLIST[row_final][first_col+30][-4:] + '-' + inputLIST[row_final][first_col+30][3:5] + '-' + inputLIST[row_final][first_col+30][:2]
+                final_list[row_final][27] = 'Default'
+                #final_list[row_final][28] = 'Client'
+                final_list[row_final][32] = inputLIST[row_final][first_col+33]
+                final_list[row_final][41] = inputLIST[row_final][first_col+35]
+                final_list[row_final][59] = inputLIST[row_final][first_col+1]
+
+        final_list.insert(0, slpit_header)
+
+
+        #Writing DEBT_ITEMS_FILE
+
+        text = final_list
+
+        for row in range(len(text)):
+            text[row] = ['|'.join(text[row])]
+
+        with open(upload_loc_dic[COUNTRY] + '\IMP_PortfolioTelcoNoQC_DEBT_ITEMS_' + today + '_' + File_end_code + '.txt', 'w',encoding='utf16') as csvFile:
+            writer = csv.writer(csvFile, lineterminator = '\n')   
+            writer.writerows(text)
+
+        csvFile.close()
+
+
+        #Generating DEBTS_FILE form given List
+
+        final_list = []
+        row_chunk = 1
+        clean_list = []
+
+        header = open(DEBTS_FILE_HEADER_LOCATION, 'r')
+        content = header.read().split('|')
+        clean_list.append(content)
+
+        if len(inputLIST) == 1:
+            clean_list.append(inputLIST[0])
+        else:
+            for row in range(len(inputLIST)): 
+                if inputLIST[row][first_col] != inputLIST[row-1][first_col]:
+                    clean_list.append(inputLIST[row])
+
+        final_list.append(content)
+
+        for row in range(1,len(clean_list)):
+            final_list.append([''] * 288)
+
+        for row_final in range(1,len(final_list)):
+            final_list[row_final][0] = VENDOR_INTCODE
+            final_list[row_final][2] = 'B2B' if clean_list[row_final][first_col+2] == '1' else "B2C"
+            final_list[row_final][3] = '>90'
+            final_list[row_final][4] = 'DOMESTIC' if clean_list[row_final][first_col + 17] == COUNTRY else 'INTERNATIONAL'
+            #if datetime.date.today() - datetime.date(int(inputLIST[row_final][37][-4:]), int(inputLIST[row_final][37][3:5]), int(inputLIST[row_final][37][:2])
+            final_list[row_final][9] = clean_list[row_final][first_col] #DEBT_SORG_ID
+            final_list[row_final][17] = 'IC003'
+            final_list[row_final][19] = 'FOR CONTACT'
+            final_list[row_final][21] = 'Debt Collection'
+            #final_list[row_final][21] = 'Reminder Service'
+            final_list[row_final][23] = 'N/A'
+            final_list[row_final][25] = 'N/A'
+            final_list[row_final][27] = 'N/A'
+            final_list[row_final][50] = '1'
+            final_list[row_final][56] = 'N/A'
+            final_list[row_final][94] = str(int(CUST_S_ID) + row_final)
+            final_list[row_final][95] = 'Business' if clean_list[row_final][first_col + 2] == '1' else 'Individual'
+            final_list[row_final][96] = clean_list[row_final][first_col + 3]
+            final_list[row_final][99] = 'N/A' if clean_list[row_final][first_col + 7] == '' else clean_list[row_final][first_col + 7]
+            final_list[row_final][100] = clean_list[row_final][first_col + 9]
+            final_list[row_final][101] = clean_list[row_final][first_col + 8]
+            final_list[row_final][102] = clean_list[row_final][first_col + 6]
+            final_list[row_final][107] = clean_list[row_final][first_col + 4]
+            final_list[row_final][109] = clean_list[row_final][first_col + 4]
+            final_list[row_final][111] = clean_list[row_final][first_col + 5]
+            final_list[row_final][113] = '' if clean_list[row_final][first_col + 11] == '' else clean_list[row_final][11+7][-4:] + '-' + clean_list[row_final][11+7][3:5] + '-' + clean_list[row_final][11+7][:2]
+            final_list[row_final][133] = COUNTRY
+            final_list[row_final][140] = clean_list[row_final][first_col+7]
+            final_list[row_final][184] = str(int(Address_Unique_Identifier) + row_final)
+            final_list[row_final][185] = 'HOME'
+            final_list[row_final][186] = 'HOME'
+            final_list[row_final][189] = '1'
+            final_list[row_final][192] = clean_list[row_final][first_col + 12]
+            final_list[row_final][193] = clean_list[row_final][first_col + 13]
+            final_list[row_final][197] = '11' #clean_list[row_final][first_col + 12][-1]
+            final_list[row_final][198] = clean_list[row_final][first_col + 15]
+            final_list[row_final][199] = clean_list[row_final][first_col + 16]
+            final_list[row_final][200] = clean_list[row_final][first_col + 14]
+            final_list[row_final][201] = clean_list[row_final][first_col + 17]
+            final_list[row_final][222] = clean_list[row_final][first_col + 18]
+            final_list[row_final][223] = clean_list[row_final][first_col + 19]
+            final_list[row_final][228] = clean_list[row_final][first_col + 21]
+            final_list[row_final][229] = clean_list[row_final][first_col + 22]
+            final_list[row_final][230] = clean_list[row_final][first_col + 20]
+            final_list[row_final][231] = clean_list[row_final][first_col + 23]
+            final_list[row_final][247] = clean_list[row_final][first_col + 25]
+            final_list[row_final][261] = clean_list[row_final][first_col + 26]
+            final_list[row_final][287] = clean_list[row_final][first_col + 27]
+
+        for row in range(1,len(final_list)):
+            final_list[row].extend([''] * 556)
+
+        header.close()
+
+
+        #Writing DEBTS_FILE
+
+        text = []
+        text.append(final_list[0])
+
+        for item in range(1 ,len(final_list)):
+            text.append(final_list[item][first_col-7:])
+
+        for row in range(len(text)):
+            text[row] = ['|'.join(text[row])]
+
+        for row in range(len(text)):
+            comma = text[row][0].replace(',','')
+            text[row][0] = comma
+
+        with open(upload_loc_dic[COUNTRY] + '\IMP_PortfolioTelcoNoQC_DEBTS_' + today + '_' + File_end_code + '.txt', 'w', encoding='utf16') as csvFile:
+            writer = csv.writer(csvFile, lineterminator = '\n') 
+            writer.writerows(text)
+
+        csvFile.close()
+
+        #Writing Rest of the Files
+
+        empty_list = [[]]
+        with open(upload_loc_dic[COUNTRY] + '\IMP_PortfolioTelcoNoQC_DEBT_LABELS_' + today + '_' + File_end_code + '.txt', 'a', encoding='utf16') as labelsFile:
+            labelsFile.write('')
+
+        with open(upload_loc_dic[COUNTRY] + '\IMP_PortfolioTelcoNoQC_DEBTS_EXT_' + today + '_' + File_end_code + '.txt', 'a', encoding='utf16') as extFile:
+            extFile.write('')
+
+        with open(upload_loc_dic[COUNTRY] + '\IMP_PortfolioTelcoNoQC_DEBTS_SCORING_' + today + '_' + File_end_code + '.txt', 'a', encoding='utf16') as scoringFile:
+            scoringFile.write('')
+
+        labelsFile.close()
+        extFile.close()
+        scoringFile.close()
+
+        messagebox.showinfo(message='Your file is uploaded to ' + instance.upper() + ' ' + COUNTRY)
+        
+    except ValueError:
+        messagebox.showinfo(message='File end code must be 3 didgits long!')
+    except IndexError:
+        messagebox.showinfo(message='Please select file location or wrong file format!')        
+    except:
+        messagebox.showinfo(message='Not all fields are Filled!')
+    
+root = tk.Tk()
+
+root.title("Generate files from Client template as .csv")
+canvas = tk.Canvas(root, height = HEIGHT, width = WIDHT).pack()
+
+frame = tk.Frame(root, bd = 5)
+frame.place(relx= 0.1, rely= 0.1, relwidth = 0.8, relheight= 0.8)
+
+country_label = tk.Label(frame, text='Select Country')
+country_label.place(relx= 0.04, rely= 0)
+
+country = tk.Listbox(frame, bd = 3)
+country.insert(1,"CH")
+country.insert(2,"FR")
+country.insert(3,"FI")
+country.insert(4,"HU")
+country.insert(5,"SE")
+country.insert(6,"NO")
+country.insert(7,"DE")
+country.insert(8,"ES")
+country.place(relx = 0, rely = 0.05, relwidth = 0.3, relheight= 0.5)
+
+vendor_label = tk.Label(frame, text='Enter Vendor Number')
+vendor_label.place(relx= 0.5, rely= 0)
+vendor_nr = tk.Entry(frame, bd = 3)
+vendor_nr.place(relx = 0.35, rely = 0.05, relwidth = 0.65, relheight= 0.08)
+
+CustID_label = tk.Label(frame, text='Enter Starting CUST_S_ID')
+CustID_label.place(relx= 0.5, rely= 0.14)
+CustID = tk.Entry(frame, bd = 3)
+CustID.place(relx = 0.35, rely = 0.19, relwidth = 0.65, relheight= 0.08)
+
+file_end_code_label = tk.Label(frame, text='Enter File end code')
+file_end_code_label.place(relx= 0.5, rely= 0.28)
+file_end_code = tk.Entry(frame, bd = 3)
+file_end_code.place(relx = 0.35, rely = 0.33, relwidth = 0.65, relheight= 0.08)
+
+file_loc_label = tk.Label(frame, text='File Location')
+file_loc_label.place(relx= 0.5, rely= 0.42)
+file_loc = tk.Entry(frame, bd = 3)
+file_loc.place(relx = 0.35, rely = 0.47, relwidth = 0.65, relheight= 0.08)
+
+button_loc = tk.Button(frame, text = "Get file Location", command = get_file_loc)
+button_loc.place(relx = 0.5, rely = 0.56, relwidth = 0.3, relheight= 0.05)
+
+upload_loc_label = tk.Label(frame, text='Where to Upload?')
+upload_loc_label.place(relx= 0, rely= 0.65)
+
+option = tk.StringVar(None,'pc')
+test = tk.Radiobutton(frame, text='TEST', variable=option, value='test')
+test.place(relx = 0, rely = 0.7, relwidth = 0.20, relheight= 0.1)
+uat = tk.Radiobutton(frame, text='UAT', variable=option, value='uat')
+uat.place(relx = 0, rely = 0.8, relwidth = 0.19, relheight= 0.1)
+pc = tk.Radiobutton(frame, text='PC', variable=option, value='pc')
+pc.place(relx = 0, rely = 0.9, relwidth = 0.17, relheight= 0.1)
+
+generate_template_button = tk.Button(frame, text = 'Generate Qualco Files from Template', bg = "#8eec95", command = submit_result_template)
+generate_template_button.place(relx = 0.35, rely = 0.7, relwidth = 0.6, relheight= 0.1)
+
+generate__mockaroo_button = tk.Button(frame, text = 'Generate Qualco Files from Mockaroo', bg = "#fffd69", command = submit_result_mockaroo)
+generate__mockaroo_button.place(relx = 0.35, rely = 0.85, relwidth = 0.6, relheight= 0.1)
+
+root.mainloop()
