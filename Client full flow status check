@@ -74,10 +74,32 @@ def get_otp(country_nr):
     elif country_nr == 14: return pyotp.TOTP('Secret_Code').now()  #ES TEST
     elif country_nr == 15: return pyotp.TOTP('Secret_Code').now()  #ES UAT
 
-def upload_to_client_portals(upload_file):
+#Generating Tamplate
+
+def generate_template_file():
+    
+    global new_row, new_file_name, IMPORT_CHECK_LIST_IN, FILE_CODE_LIST
+    
+    today = datetime.today()
+    inv_date = today - timedelta(days=80)
+    inv_due_date = today - timedelta(days=15)
+
+    new_file_name = today.strftime('%m-%d')+ '_' + 'Full_Flow_Test' + '_' + str(ROUNDS + 1) + '.xlsx'
+    copyfile('Template.xlsx', new_file_name)
+    file = new_file_name
+
+    wb = openpyxl.load_workbook(filename=file)
+    ws = wb['1. Template']
+
+    new_row = [randomStringDigits(), 'Invoice', '2', '', '', '', '', 'DailyFullFlow' + str(ROUNDS + 1), 'Test', '', '', '', 'Street 1', '',
+              '1548', 'City', '', '', '', '', '', '', '', '', '', '', '', '', randomStringDigits(), inv_date.strftime("%d-%m-%Y"),
+              inv_due_date.strftime("%d-%m-%Y"), '', random.randint(100, 500), random.randint(501, 2000)]
+
+    ws.append(new_row)
+    wb.save(file)
 
     driver = webdriver.Chrome(r'C:\Users\konygal\AppData\Local\Programs\Python\Python38\chromedriver')
-    time.sleep(3)
+    time.sleep(2)
     
     for instance in range(len(CLIENT_PORTAL_LINK)):
 
@@ -85,7 +107,7 @@ def upload_to_client_portals(upload_file):
 
             try:
                 driver.get(CLIENT_PORTAL_LINK[instance]);
-                time.sleep(3) 
+                time.sleep(1) 
                 username_box = driver.find_element_by_name('username')
                 username_box.send_keys('aleksandr.konygin@intrum.com')
                 password_box = driver.find_element_by_name('password')
@@ -101,54 +123,21 @@ def upload_to_client_portals(upload_file):
                 button = driver.find_element_by_xpath('//*[@id="ATTACHMENTS"]/div/p-fileupload/div/div[1]/span')
                 button.click()
                 time.sleep(1)
-                keyboard.write('C:\\Users\\konygal\\Desktop\\Python notebook\\' + upload_file)
+                keyboard.write('C:\\Users\\konygal\\Desktop\\Python notebook\\Full Flow Tests\\' + file)
                 time.sleep(1)
                 keyboard.press_and_release('enter')
                 submit_button = driver.find_element_by_xpath('/html/body/app-root/newcase-upload-page/div/newcase-upload/div/div/div[2]/button[2]')
                 time.sleep(2)
                 submit_button.click()
-                
+                time.sleep(1)
+                print(file + ' has been uploaded to ' + ALL_INV_DICT_BY_COUNTRY[instance])
+                text = file + ' has been uploaded to ' + ALL_INV_DICT_BY_COUNTRY[instance]
+                write_detail_log_file(text)
             except:
                 continue
         
     driver.quit()
-    
-        
-def randomStringDigits(stringLength=12):
-    """Generate a random string of letters and digits """
-    lettersAndDigits = string.ascii_letters + string.digits
-    return ''.join(random.choice(lettersAndDigits) for i in range(stringLength))
-
-#Generating Tamplate
-
-def generate_template_file():
-    
-    global new_row, new_file_name, IMPORT_CHECK_LIST_IN
-    
-    today = datetime.today()
-    inv_date = today - timedelta(days=80)
-    inv_due_date = today - timedelta(days=15)
-
-    new_file_name = today.strftime('%m-%d')+ '_' + 'Full_Flow_Test' + '_' + str(ROUNDS + 1) + '.xlsx'
-    copyfile('Template.xlsx', new_file_name)
-    
-
-    wb = openpyxl.load_workbook(filename=new_file_name)
-    ws = wb['1. Template']
-
-    new_row = [randomStringDigits(), 'Invoice', '2', '', '', '', '', 'DailyFullFlow' + str(ROUNDS), 'Test', '', '', '', 'Street 1', '',
-              '1548', 'City', '', '', '', '', '', '', '', '', '', '', '', '', randomStringDigits(), inv_date.strftime("%d-%m-%Y"),
-              inv_due_date.strftime("%d-%m-%Y"), '', random.randint(100, 500), random.randint(501, 2000)]
-
-    ws.delete_rows(3)
-    ws.delete_rows(3)
-    ws.delete_rows(3)
-    ws.append(new_row)
-    wb.save(new_file_name)
-    
-    upload_to_client_portals(new_file_name)
-        
-    os.remove(new_file_name)
+    os.remove(file)
 
     
 def start_flow_check():
@@ -239,6 +228,7 @@ def end_flow_check():
                     text = ALL_INV_DICT_BY_COUNTRY[instance] + ' is stuck in IMPORT folder'
                     write_detail_log_file(text)
             break
+
             
 def show_day_of_week(today):
     
@@ -250,27 +240,28 @@ def show_day_of_week(today):
     elif today == 5: return 'Saturday'
     elif today == 6: return 'Sunday'
 
-    
+               
 def fill_in_log():
-    
-    global IMPORT_CHECK_LIST_IN
-    
-    try:                                                                                                      
-        log_file_name = r'W:\LBS\OC\To Be processes\_General\Data Registration\Instance Full Flow Status\Full_Flow_Progress_Log.xlsx'
-        log_row = [''] * (len(IMPORT_CHECK_LIST_IN) + 3)
-        columns = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N' , 'O', 'P', 'Q', 'R', 'S', 'T')
 
-        today = datetime.today()
-        day_of_week = datetime.today().weekday()
-        count = 0
-        
-        wb = openpyxl.load_workbook(filename=log_file_name)
+    global lap_try, IMPORT_CHECK_LIST_IN
+                                                                                                         
+    log_file_name_network = r'W:\LBS\OC\To Be processes\_General\Data Registration\Instance Full Flow Status\Full_Flow_Progress_Log.xlsx'
+    temp_log_file_name_network = r'W:\LBS\OC\To Be processes\_General\Data Registration\Instance Full Flow Status\Full_Flow_Progress_Log' + '_temp.xlsx'
+    log_file = 'Full_Flow_Progress_Log.xlsx'
+    log_row = [''] * (len(IMPORT_CHECK_LIST_IN) + 3)
+    columns = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N' , 'O', 'P', 'Q', 'R', 'S', 'T')
+
+    today = datetime.today()
+    day_of_week = datetime.today().weekday()
+    count = 0
+    try:
+        wb = openpyxl.load_workbook(filename=log_file)
         ws = wb['LOG']
 
         for row in ws.rows:
             count += 1
         
-        if (day_of_week == 5 and lap_try == 1) or (day_of_week == 0 and lap_try == 1):
+        if (day_of_week == 5 and lap_try % 2 == 0) or (day_of_week == 0 and lap_try % 2 == 0):
             ws.append(log_row)
             for i in range(len(columns)):
                 cell = ws[columns[i] + str(count + 1)]
@@ -280,6 +271,10 @@ def fill_in_log():
         log_row[0] = today.strftime("%Y-%m-%d")
         log_row[1] = show_day_of_week(day_of_week)
         log_row[2] = strftime("%H:%M", localtime())
+        log_row[2] = log_row[2].split(':')
+        log_row[2][0] = str(int(log_row[2][0]) + 1)
+        log_row[2] = ':'.join(log_row[2])
+        
         for status in range(len(IMPORT_CHECK_LIST_IN)):
             if IMPORT_CHECK_LIST_IN[status] == None or IMPORT_CHECK_LIST_IN[status] == True:
                 inst_status = 'FAIL'
@@ -294,12 +289,31 @@ def fill_in_log():
                 cell = ws[columns[i-1] + str(count + 2)]
                 cell.fill = PatternFill(fgColor="EBF5FB", fill_type = "solid")
                 
-        wb.save(log_file_name)
+        wb.save(log_file)
+        copyfile(log_file, temp_log_file_name_network)
         
     except:
-        fill_in_log()
-
         
+        log_row = [''] * (len(IMPORT_CHECK_LIST_IN) + 3)
+        log_row[0] = today.strftime("%Y-%m-%d")
+        log_row[1] = show_day_of_week(day_of_week)
+        log_row[2] = strftime("%H:%M", localtime())
+        log_row[2] = log_row[2].split(':')
+        log_row[2][0] = str(int(log_row[2][0]) + 1)
+        log_row[2] = ':'.join(log_row[2])
+        
+        for status in range(len(IMPORT_CHECK_LIST_IN)):
+            if IMPORT_CHECK_LIST_IN[status] == None or IMPORT_CHECK_LIST_IN[status] == True:
+                inst_status = 'FAIL'
+            else:
+                inst_status = 'PASS'    
+            log_row[status + 3] = inst_status
+        error_log = open('Error_writing_excel.txt', 'a')
+        error_log.write(','.join(log_row))
+        error_log.write('\n')
+        error_log.close()
+                                                                                                      
+                                                                                                      
 def write_detail_log_file(add):
     
     detail_log_row = open(r'W:\LBS\OC\To Be processes\_General\Data Registration\Instance Full Flow Status\Detail full flow log.txt', 'a')
@@ -310,48 +324,52 @@ def write_detail_log_file(add):
     
 def start_work():
     
-    global IMPORT_FILE_NAME, PROCESSED_CHECK_LIST, IMPORT_CHECK_LIST_IN, ROUNDS, start_time
+    global IMPORT_FILE_NAME, PROCESSED_CHECK_LIST, IMPORT_CHECK_LIST_IN, ROUNDS, start_time, lap_try
     
-    ROUNDS = 14
-                                                                                               
+    ROUNDS = 10
+    lap_try = 0
+    temp_log_file_name_network = r'W:\LBS\OC\To Be processes\_General\Data Registration\Instance Full Flow Status\Full_Flow_Progress_Log' + '_temp.xlsx'
+    log_file_name_network = r'W:\LBS\OC\To Be processes\_General\Data Registration\Instance Full Flow Status\Full_Flow_Progress_Log.xlsx'
+                                                                                    
     now = strftime("%H:%M", localtime())
     time_check = now.split(':')
-                                                                                                      
-    #if (int(time_check[0]) == 5 and 50 <= int(time_check[1]) <= 59) or (int(time_check[0]) == 11 and 50 <= int(time_check[1]) <= 59):
-                                                                                                      
+                                                                                                                                                                                                   
     write_detail_log_file('_' * 36 + strftime("%Y-%m-%d %H:%M", localtime()) + '_' * 36)
     IMPORT_FILE_NAME = [None] * len(TEST_INV_IMPORT)
     PROCESSED_CHECK_LIST = [None] * len(TEST_INV_IMPORT)
     IMPORT_CHECK_LIST_IN = [None] * len(TEST_INV_IMPORT)
-    
-    if ROUNDS % 2 == 0:
-        lap_try = 1
-    else:
-        lap_try = 2
-
-    total_time = time.time()
+        
     start_time = time.time()
 
     generate_template_file()
     start_flow_check()
     end_flow_check()
+    
     if None in IMPORT_CHECK_LIST_IN:
         start_time = time.time()
         ROUNDS += 1
-        lap_try += 1
         generate_template_file()
         start_flow_check()
         end_flow_check()
+    else:
+        ROUNDS += 1
+       
     fill_in_log()
-    end_total_time = time.time() - total_time
-    write_detail_log_file('Total check time ' + str(time.strftime('%H:%M:%S', time.gmtime(end_total_time))))
+    lap_try += 1 
     write_detail_log_file('_' * 29 + 'Process Ended ' + strftime("%Y-%m-%d %H:%M", localtime()) + '_' * 29)
     ROUNDS += 1
         
-    #else:
-    #    time.sleep(60 * 5)
-
+    try:    
+        if temp_log_file_name_network[-32:] in os.listdir(temp_log_file_name_network[:-32]):
+            file = os.listdir(temp_log_file_name_network[:-32])
+            loc_temp = file.index(temp_log_file_name_network[-32:])
+            loc_log = file.index(log_file_name_network[-27:])
+            os.remove(temp_log_file_name_network[:-32] + file[loc_log])
+            os.rename(temp_log_file_name_network[:-32] + file[loc_temp], temp_log_file_name_network[:-32] + file[loc_log])
+    except:
+        pass
+    
 
 start_work()
-     
-print('Program Ended')
+
+print('Execution Done')
